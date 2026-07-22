@@ -21,6 +21,7 @@
         <el-menu-item index="/orders"><el-icon><Tickets /></el-icon>订单管理</el-menu-item>
         <el-menu-item index="/deliveries"><el-icon><Van /></el-icon>送货清单</el-menu-item>
         <el-menu-item index="/products"><el-icon><Goods /></el-icon>产品库</el-menu-item>
+        <el-menu-item index="/stockin"><el-icon><TakeawayBox /></el-icon>产品入库</el-menu-item>
         <el-menu-item index="/templates"><el-icon><Box /></el-icon>礼盒模板</el-menu-item>
         <el-menu-item index="/customers"><el-icon><User /></el-icon>客户管理</el-menu-item>
       </el-menu>

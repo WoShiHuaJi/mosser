@@ -15,10 +15,10 @@
       <el-form :model="form" label-width="90px">
         <el-row :gutter="16">
           <el-col :span="8">
-            <el-form-item label="客户" required>
+            <el-form-item label="客户">
               <el-select
                 v-model="form.customer"
-                placeholder="选择或输入客户"
+                placeholder="选择或输入客户（选填）"
                 filterable
                 allow-create
                 default-first-option
@@ -161,10 +161,6 @@ function importFromOrder(order) {
 }
 
 function save() {
-  if (!form.value.customer.trim()) {
-    ElMessage.warning('请填写客户')
-    return
-  }
   if (!form.value.deliveryDate) {
     ElMessage.warning('请选择送货日期')
     return

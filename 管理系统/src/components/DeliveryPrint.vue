@@ -10,9 +10,6 @@
         <col style="width: 21%" />
       </colgroup>
       <tbody>
-        <tr>
-          <td colspan="4" class="customer-cell">客户：{{ delivery.customer }}</td>
-        </tr>
         <tr class="head-row">
           <td>序号</td>
           <td>货物名称</td>
@@ -83,10 +80,6 @@ const totalQty = computed(() =>
   text-align: center;
   height: 24px;
   word-break: break-all;
-}
-.customer-cell {
-  text-align: left !important;
-  font-weight: bold;
 }
 .head-row td {
   font-weight: bold;

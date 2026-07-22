@@ -29,6 +29,7 @@ export const store = reactive({
   saving: false,
   lastSavedAt: null,
   products: [], // { id, name, unit, stock }
+  stockIns: [], // { id, remark, createdAt, items: [{ productId, name, unit, qty }] }
   templates: [], // { id, name, items: [{ productId, name, unit, qty }] }
   customers: [], // { id, name }
   orders: [], // { id, orderNo, customerId, customerName, status, items, remark, createdAt }
@@ -43,6 +44,7 @@ function snapshot() {
     version: 1,
     savedAt: new Date().toISOString(),
     products: store.products,
+    stockIns: store.stockIns,
     templates: store.templates,
     customers: store.customers,
     orders: store.orders,
@@ -71,13 +73,19 @@ function scheduleSave() {
 }
 
 watch(
-  () => [store.products, store.templates, store.customers, store.orders, store.deliveries],
+  () => [store.products, store.stockIns, store.templates, store.customers, store.orders, store.deliveries],
   scheduleSave,
   { deep: true }
 )
 
 function applyData(data) {
   store.products = data.products || []
+  // 兼容旧版按产品平铺的入库记录：包装为单产品批次
+  store.stockIns = (data.stockIns || []).map((r) =>
+    r.items
+      ? r
+      : { id: r.id, remark: r.remark || '', createdAt: r.createdAt, items: [{ productId: r.productId, name: r.name, unit: r.unit, qty: r.qty }] }
+  )
   store.templates = data.templates || []
   store.customers = data.customers || []
   store.orders = data.orders || []
@@ -168,6 +176,31 @@ export function cancelStock(order) {
     if (product) product.stock = (Number(product.stock) || 0) + (Number(item.qty) || 0)
   }
   order.status = 'pending'
+}
+
+// ---------- 入库业务逻辑 ----------
+
+// 产品入库：一批可含多种产品，统一备注，逐产品增加库存
+export function stockIn(items, remark = '') {
+  store.stockIns.push({
+    id: genId(),
+    remark,
+    createdAt: Date.now(),
+    items: items.map(({ product, qty }) => {
+      product.stock = (Number(product.stock) || 0) + (Number(qty) || 0)
+      return { productId: product.id, name: product.name, unit: product.unit, qty: Number(qty) || 0 }
+    })
+  })
+}
+
+// 删除入库批次：回滚该批全部产品的库存
+export function removeStockIn(record) {
+  for (const item of record.items) {
+    const product = store.products.find((p) => p.id === item.productId)
+    if (product) product.stock = (Number(product.stock) || 0) - (Number(item.qty) || 0)
+  }
+  const i = store.stockIns.findIndex((r) => r.id === record.id)
+  if (i > -1) store.stockIns.splice(i, 1)
 }
 
 let orderSeq = 1
