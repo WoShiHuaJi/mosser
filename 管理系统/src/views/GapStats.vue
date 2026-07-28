@@ -14,7 +14,7 @@
       </el-col>
       <el-col :span="8">
         <el-card shadow="hover">
-          <el-statistic title="紧张产品种类数" :value="tightCount" />
+          <el-statistic title="缺口总数量" :value="totalGap" />
         </el-card>
       </el-col>
     </el-row>
@@ -37,7 +37,7 @@
       </el-table-column>
       <el-table-column label="库存状态" width="120">
         <template #default="{ row }">
-          <el-tag :type="row.level === '充足' ? 'success' : row.level === '紧张' ? 'warning' : 'danger'">
+          <el-tag :type="row.level === '充足' ? 'success' : 'danger'">
             {{ row.level }}
           </el-tag>
         </template>
@@ -60,8 +60,8 @@ const rows = computed(() => {
       const product = key.startsWith('custom:') ? null : store.products.find((p) => p.id === key)
       const stock = product ? Number(product.stock) || 0 : 0
       const gap = d.need - stock
-      // 三档：充足=库存满足需求；紧张=有库存但不足；缺货=库存为0仍有需求
-      const level = gap <= 0 ? '充足' : stock > 0 ? '紧张' : '缺货'
+      // 两档：充足=库存满足需求；缺货=存在缺口
+      const level = gap <= 0 ? '充足' : '缺货'
       return { name: d.name, unit: d.unit, need: d.need, stock, gap, level }
     })
     .sort((a, b) => b.gap - a.gap)
@@ -69,14 +69,14 @@ const rows = computed(() => {
 
 const pendingCount = computed(() => store.orders.filter((o) => o.status === 'pending').length)
 const outCount = computed(() => rows.value.filter((r) => r.level === '缺货').length)
-const tightCount = computed(() => rows.value.filter((r) => r.level === '紧张').length)
+const totalGap = computed(() => rows.value.reduce((sum, r) => sum + (r.gap > 0 ? r.gap : 0), 0))
 
 function levelColor(row) {
-  return row.level === '充足' ? '#67c23a' : row.level === '紧张' ? '#e6a23c' : '#f56c6c'
+  return row.level === '充足' ? '#67c23a' : '#f56c6c'
 }
 
 function rowClass({ row }) {
-  return row.level === '缺货' ? 'row-out' : row.level === '紧张' ? 'row-tight' : ''
+  return row.level === '缺货' ? 'row-out' : ''
 }
 
 function exportExcel() {
@@ -101,5 +101,4 @@ function exportExcel() {
 .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 .tip { color: #909399; font-size: 13px; }
 :deep(.row-out) { background: #fef0f0 !important; }
-:deep(.row-tight) { background: #fdf6ec !important; }
 </style>
