@@ -141,6 +141,13 @@ export async function importAll() {
 
 // ---------- 订单业务逻辑 ----------
 
+// 订单金额：只统计已确认产品
+export function orderTotal(order) {
+  return order.items
+    .filter((it) => it.confirmed)
+    .reduce((sum, it) => sum + (Number(it.qty) || 0) * (Number(it.price) || 0), 0)
+}
+
 // 待备货订单中 confirmed 产品的需求汇总：{ productId: { name, unit, need } }
 export function calcDemand() {
   const demand = {}

@@ -2,6 +2,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 
 const routes = [
   { path: '/', name: 'gap', component: () => import('../views/GapStats.vue'), meta: { title: '库存缺口统计' } },
+  { path: '/overview', name: 'overview', component: () => import('../views/Overview.vue'), meta: { title: '总览' } },
   { path: '/orders', name: 'orders', component: () => import('../views/Orders.vue'), meta: { title: '订单管理' } },
   { path: '/products', name: 'products', component: () => import('../views/Products.vue'), meta: { title: '产品库' } },
   { path: '/stockin', name: 'stockin', component: () => import('../views/StockIn.vue'), meta: { title: '产品入库' } },

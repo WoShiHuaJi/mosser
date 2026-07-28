@@ -17,6 +17,7 @@
     <el-aside width="200px">
       <div class="logo">订单管理系统</div>
       <el-menu :default-active="$route.path" router>
+        <el-menu-item index="/overview"><el-icon><Odometer /></el-icon>总览</el-menu-item>
         <el-menu-item index="/"><el-icon><DataAnalysis /></el-icon>库存缺口统计</el-menu-item>
         <el-menu-item index="/orders"><el-icon><Tickets /></el-icon>订单管理</el-menu-item>
         <el-menu-item index="/deliveries"><el-icon><Van /></el-icon>送货清单</el-menu-item>

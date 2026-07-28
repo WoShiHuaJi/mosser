@@ -26,7 +26,7 @@
         </template>
       </el-table-column>
       <el-table-column label="金额(元)" width="90">
-        <template #default="{ row }">{{ orderTotal(row) }}</template>
+          <template #default="{ row }">{{ orderTotal(row).toFixed(2) }}</template>
       </el-table-column>
       <el-table-column label="状态" width="90">
         <template #default="{ row }">
@@ -150,7 +150,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { store, genId, ORDER_STATUS, STATUS_TYPE, confirmStock, cancelStock, nextOrderNo } from '../store'
+import { store, genId, ORDER_STATUS, STATUS_TYPE, confirmStock, cancelStock, nextOrderNo, orderTotal } from '../store'
 
 const statusFilter = ref('')
 const dialogVisible = ref(false)
@@ -194,14 +194,6 @@ function onProductChange(item, productId) {
 
 function lineTotal(item) {
   return ((Number(item.qty) || 0) * (Number(item.price) || 0)).toFixed(2)
-}
-
-// 订单金额：只统计已确认产品
-function orderTotal(order) {
-  return order.items
-    .filter((it) => it.confirmed)
-    .reduce((sum, it) => sum + (Number(it.qty) || 0) * (Number(it.price) || 0), 0)
-    .toFixed(2)
 }
 
 // 打开模板选择：为每个模板附加礼盒数量输入（默认 1）
