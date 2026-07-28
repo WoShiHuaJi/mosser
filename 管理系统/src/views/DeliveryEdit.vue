@@ -6,6 +6,9 @@
         <el-button :disabled="!store.orders.length" @click="importDialogVisible = true">
           <el-icon><Download /></el-icon>从订单导入
         </el-button>
+        <el-button :disabled="!store.templates.length" @click="openTemplateDialog">
+          <el-icon><Box /></el-icon>从礼盒模板填充
+        </el-button>
         <el-button type="primary" @click="save">保存</el-button>
         <el-button v-if="form.id" type="success" @click="printTarget = savedSnapshot()">打印/PDF</el-button>
       </div>
@@ -94,6 +97,31 @@
       <div class="tip" style="margin-top: 8px">点击订单行即可填充到送货单（客户名一并带入）</div>
     </el-dialog>
 
+    <!-- 从礼盒模板填充 -->
+    <el-dialog v-model="templateDialogVisible" title="从礼盒模板填充" width="640px">
+      <el-table :data="templateRows" border>
+        <el-table-column prop="name" label="模板名称" width="160" />
+        <el-table-column label="内含产品">
+          <template #default="{ row }">
+            <span v-for="(item, i) in row.items" :key="i" style="margin-right: 8px">
+              {{ item.name }}×{{ item.qty }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="礼盒数量" width="130">
+          <template #default="{ row }">
+            <el-input-number v-model="row.boxQty" :min="1" style="width: 110px" />
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="80">
+          <template #default="{ row }">
+            <el-button link type="primary" @click="applyTemplate(row)">填充</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div class="tip" style="margin-top: 8px">输入礼盒数量后点击「填充」，产品数量 = 模板数量 × 礼盒数量</div>
+    </el-dialog>
+
     <delivery-print-dialog v-model="printTarget" />
   </div>
 </template>
@@ -109,6 +137,8 @@ import DeliveryPrintDialog from '../components/DeliveryPrintDialog.vue'
 const route = useRoute()
 const router = useRouter()
 const importDialogVisible = ref(false)
+const templateDialogVisible = ref(false)
+const templateRows = ref([])
 const printTarget = ref(null)
 
 function newRow() {
@@ -148,16 +178,32 @@ function confirmedItems(order) {
   return order.items.filter((it) => it.confirmed)
 }
 
+// 追加产品行：先移除未填名称的空行，再追加
+function appendItems(list) {
+  form.value.items = form.value.items.filter((it) => it.name && it.name.trim())
+  for (const it of list) form.value.items.push(it)
+}
+
 // 从订单导入：仅 confirmed 产品，客户名带入
 function importFromOrder(order) {
   form.value.customer = order.customerName
-  for (const it of confirmedItems(order)) {
-    form.value.items.push({ key: genId(), name: it.name, spec: '', qty: it.qty, unit: it.unit })
-  }
-  form.value.items = form.value.items.filter((it, i) => it.name || i === 0)
-  if (form.value.items.length === 1 && !form.value.items[0].name) form.value.items = []
+  appendItems(confirmedItems(order).map((it) => ({ key: genId(), name: it.name, spec: '', qty: it.qty, unit: it.unit })))
   importDialogVisible.value = false
   ElMessage.success(`已导入订单 ${order.orderNo}`)
+}
+
+// 打开模板选择：为每个模板附加礼盒数量输入（默认 1）
+function openTemplateDialog() {
+  templateRows.value = store.templates.map((t) => ({ ...t, boxQty: 1 }))
+  templateDialogVisible.value = true
+}
+
+// 从模板填充：产品数量 = 模板数量 × 礼盒数量
+function applyTemplate(tpl) {
+  const boxQty = Number(tpl.boxQty) || 1
+  appendItems(tpl.items.map((it) => ({ key: genId(), name: it.name, spec: '', qty: (Number(it.qty) || 0) * boxQty, unit: it.unit })))
+  templateDialogVisible.value = false
+  ElMessage.success(`已填充模板「${tpl.name}」× ${boxQty}`)
 }
 
 function save() {
