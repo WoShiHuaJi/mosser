@@ -30,7 +30,7 @@ export const store = reactive({
   lastSavedAt: null,
   products: [], // { id, name, unit, stock }
   stockIns: [], // { id, remark, createdAt, items: [{ productId, name, unit, qty }] }
-  templates: [], // { id, name, items: [{ productId, name, unit, qty }] }
+  templates: [], // { id, name, price, items: [{ productId, name, unit, qty }] }
   customers: [], // { id, name }
   orders: [], // { id, orderNo, customerId, customerName, status, items, remark, createdAt }
   deliveries: [] // { id, noteNo, customer, address, deliveryDate, items, createdAt }
@@ -141,11 +141,21 @@ export async function importAll() {
 
 // ---------- 订单业务逻辑 ----------
 
-// 订单金额：只统计已确认产品
+// 订单金额：只统计已确认产品；礼盒填充的产品按组计 礼盒价格 × 礼盒数量（每组只计一次）
 export function orderTotal(order) {
-  return order.items
-    .filter((it) => it.confirmed)
-    .reduce((sum, it) => sum + (Number(it.qty) || 0) * (Number(it.price) || 0), 0)
+  let sum = 0
+  const countedBoxes = new Set()
+  for (const it of order.items) {
+    if (!it.confirmed) continue
+    if (it.box && it.box.gid) {
+      if (countedBoxes.has(it.box.gid)) continue
+      countedBoxes.add(it.box.gid)
+      sum += (Number(it.box.price) || 0) * (Number(it.box.boxQty) || 0)
+    } else {
+      sum += (Number(it.qty) || 0) * (Number(it.price) || 0)
+    }
+  }
+  return sum
 }
 
 // 待备货订单中 confirmed 产品的需求汇总：{ productId: { name, unit, need } }

@@ -110,7 +110,7 @@
               <el-icon><Plus /></el-icon>{{ form.id ? '追加产品' : '添加产品' }}
             </el-button>
             <div v-if="!form.items.length" class="empty-text">暂无产品，可添加或从模板填充</div>
-            <div v-else class="order-total">合计金额（已确认）：¥ {{ orderTotal(form) }}</div>
+            <div v-else class="order-total">合计金额（已确认）：¥ {{ orderTotal(form).toFixed(2) }}</div>
           </div>
         </el-form-item>
       </el-form>
@@ -203,8 +203,10 @@ function openTemplateDialog() {
 }
 
 // 从模板填充：产品数量 = 模板数量 × 礼盒数量（单价取产品库当前价），不关联模板后续变更
+// 每个产品行附带礼盒快照 box：金额按 礼盒价格 × 礼盒数量 整组计一次
 function applyTemplate(tpl) {
   const boxQty = Number(tpl.boxQty) || 1
+  const box = { gid: genId(), price: Number(tpl.price) || 0, boxQty }
   for (const it of tpl.items) {
     const p = store.products.find((x) => x.id === it.productId)
     form.value.items.push({
@@ -213,7 +215,8 @@ function applyTemplate(tpl) {
       unit: it.unit,
       price: p ? Number(p.price) || 0 : 0,
       qty: (Number(it.qty) || 0) * boxQty,
-      confirmed: true
+      confirmed: true,
+      box
     })
   }
   templateDialogVisible.value = false

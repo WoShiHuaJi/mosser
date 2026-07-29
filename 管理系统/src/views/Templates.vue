@@ -7,6 +7,9 @@
 
     <el-table :data="store.templates" border stripe>
       <el-table-column prop="name" label="模板名称" min-width="180" />
+      <el-table-column label="礼盒价格" width="110">
+        <template #default="{ row }">{{ (Number(row.price) || 0).toFixed(2) }}</template>
+      </el-table-column>
       <el-table-column label="内含产品" min-width="360">
         <template #default="{ row }">
           <el-tag v-for="(item, i) in row.items" :key="i" size="small" style="margin: 2px 4px 2px 0">
@@ -30,6 +33,10 @@
       <el-form :model="form" label-width="90px">
         <el-form-item label="模板名称" required>
           <el-input v-model="form.name" placeholder="如：中秋经典礼盒" />
+        </el-form-item>
+        <el-form-item label="礼盒价格">
+          <el-input-number v-model="form.price" :min="0" :precision="2" style="width: 160px" />
+          <span class="tip" style="margin-left: 8px">订单使用该模板时按此价格 × 礼盒数量计价</span>
         </el-form-item>
         <el-form-item label="产品明细">
           <div class="items-editor">
@@ -69,7 +76,7 @@ const form = ref({ items: [] })
 function openDialog(row) {
   form.value = row
     ? { ...row, items: row.items.map((it) => ({ ...it })) }
-    : { id: '', name: '', items: [] }
+    : { id: '', name: '', price: 0, items: [] }
   dialogVisible.value = true
 }
 
