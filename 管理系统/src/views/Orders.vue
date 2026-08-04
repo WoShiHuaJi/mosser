@@ -57,7 +57,15 @@
     <el-dialog v-model="dialogVisible" :title="form.id ? '编辑订单' : '新建订单'" width="760px" top="5vh">
       <el-form :model="form" label-width="90px">
         <el-form-item label="客户" required>
-          <el-select v-model="form.customerId" placeholder="选择客户" filterable style="width: 280px" :disabled="!editable">
+          <el-select
+            v-model="form.customerId"
+            placeholder="选择或手动输入客户"
+            filterable
+            allow-create
+            default-first-option
+            style="width: 280px"
+            :disabled="!editable"
+          >
             <el-option v-for="c in store.customers" :key="c.id" :label="c.name" :value="c.id" />
           </el-select>
           <el-button
@@ -175,6 +183,10 @@ function openDialog(row) {
   form.value = row
     ? { ...row, items: row.items.map((it) => ({ ...it })) }
     : { id: '', orderNo: '', customerId: '', customerName: '', status: 'pending', items: [], remark: '', paid: false, createdAt: null }
+  // 手动输入的客户没有 customerId，用名称回填以便编辑时正常显示
+  if (form.value.id && !form.value.customerId && form.value.customerName) {
+    form.value.customerId = form.value.customerName
+  }
   dialogVisible.value = true
 }
 
@@ -224,8 +236,8 @@ function applyTemplate(tpl) {
 }
 
 function save() {
-  if (!form.value.customerId) {
-    ElMessage.warning('请选择客户')
+  if (!form.value.customerId || !String(form.value.customerId).trim()) {
+    ElMessage.warning('请选择或填写客户')
     return
   }
   form.value.items = form.value.items.filter((it) => it.productId && it.qty > 0)
@@ -233,8 +245,14 @@ function save() {
     ElMessage.warning('请至少添加一条产品明细')
     return
   }
+  // 客户来源两种：从客户管理选择（customerId 为 id）；手动输入（customerId 为输入的文本）
   const customer = store.customers.find((c) => c.id === form.value.customerId)
-  form.value.customerName = customer ? customer.name : ''
+  if (customer) {
+    form.value.customerName = customer.name
+  } else {
+    form.value.customerName = String(form.value.customerId).trim()
+    form.value.customerId = ''
+  }
   if (form.value.id) {
     const target = store.orders.find((o) => o.id === form.value.id)
     Object.assign(target, form.value)
